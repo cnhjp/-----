@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      .control {
+        display: flex;
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      const list = [];
+      for (let i = 1; i <= 60000; i++) list.push(i);
+
+      // 清除列表数据
+      function clearList() {
+        console.time("clearList");
+        const ul = document.getElementById("ul");
+        if (ul) {
+          ul.innerHTML = "";
+        }
+        console.timeEnd("clearList");
+      }
+
+      // 普通渲染
+      function normalRender() {
+        console.time("normalRender");
+        clearList();
+        list.forEach((item) => {
+          const li = document.createElement("li");
+          li.innerText = item;
+          ul.appendChild(li);
+        });
+        console.timeEnd("normalRender");
+      }
+
+      // 优化渲染
+      function optimizeRender() {
+        console.time("optimizeRender");
+        clearList();
+        const ul = document.getElementById("ul");
+        const fragment = document.createDocumentFragment();
+        list.forEach((item) => {
+          const li = document.createElement("li");
+          li.innerText = item;
+          fragment.appendChild(li);
+        });
+        ul.appendChild(fragment);
+        console.timeEnd("optimizeRender");
+      }
+
+      // 懒渲染
+      function lazyRender() {
+        console.time("lazyRender");
+        clearList();
+        const ul = document.getElementById("ul");
+        let idx = 0, // 当前渲染的索引
+          maxCount = 500; // 每次渲染的最大数量
+        render(maxCount);
+        console.timeEnd("lazyRender");
+
+        // 滚动事件
+        function scrollEvent() {
+          if (idx >= list.length) {
+            window.removeEventListener("scroll", scrollEvent);
+            return;
+          }
+          const { scrollTop, clientHeight, scrollHeight } =
+            document.documentElement;
+          if (scrollTop + clientHeight >= scrollHeight) {
+            render(maxCount);
+          }
+        }
+        window.addEventListener("scroll", scrollEvent);
+
+        function render(count) {
+          if (idx >= list.length) return;
+          const fragment = document.createDocumentFragment();
+          for (let i = 0; i < count; i++) {
+            const li = document.createElement("li");
+            li.innerText = list[idx];
+            fragment.appendChild(li);
+            idx++;
+          }
+          ul.appendChild(fragment);
+        }
+      }
+    </script>
+
+    <div class="control">
+      <button onclick="normalRender()">普通渲染</button>
+      <button onclick="clearList()">清除列表</button>
+      <button onclick="optimizeRender()">优化渲染</button>
+      <button onclick="lazyRender()">懒渲染</button>
+    </div>
+    <ul id="ul"></ul>
+  </body>
+</html>
